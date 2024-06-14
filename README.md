@@ -2,6 +2,12 @@
 
 Theia based general purpose IDE base image for various projects.
 
+## Pull
+
+```sh
+docker pull ghcr.io/intfish/theia:main
+```
+
 ## Build
 
 `docker build -t intfish/theia:dev .`
