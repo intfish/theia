@@ -1,8 +1,10 @@
-# Theia
+# intfish/theia
+
+Theia based general purpose IDE base image for various projects.
 
 ## Build
 
-`docker build -t theia-image .`
+`docker build -t intfish/theia:dev .`
 
 ## Run
 #### Example with `THEIA_WORKSPACE`
