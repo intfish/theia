@@ -30,19 +30,32 @@ RUN chmod g+rw /home && \
 	chown -R theia:theia /home/theia && \
 	chown -R theia:theia /home/workspace;
 
-RUN apk add --no-cache git openssh bash libsecret
+RUN apk add --no-cache git openssh bash libsecret curl zsh shadow
 
-ENV HOME /home/theia
+ENV HOME=/home/theia \
+	SHELL=/bin/zsh \
+	THEIA_DEFAULT_PLUGINS=local-dir:/home/theia/plugins
+
+RUN sh -c "$(curl -fsSL https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
+
+RUN cat <<EOT > "$HOME/.zshrc"
+export ZSH="\$HOME/.oh-my-zsh"
+ZSH_THEME="gnzh"
+DISABLE_AUTO_UPDATE=true
+plugins=(git)
+source "\$ZSH/oh-my-zsh.sh"
+zstyle ':omz:update' mode disabled
+EOT
 
 WORKDIR /home/theia
 
+RUN chsh -s /bin/zsh theia
+
 COPY --from=0 --chown=theia:theia /home/theia /home/theia
+
 COPY entrypoint.sh /entrypoint.sh
 
 EXPOSE 3000
-
-ENV SHELL=/bin/bash \
-	THEIA_DEFAULT_PLUGINS=local-dir:/home/theia/plugins
 
 USER theia
 
