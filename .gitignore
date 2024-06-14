@@ -1,0 +1,26 @@
+.DS_Store
+Thumbs.db
+__pycache__
+
+/docker-compose.yml
+/docker-compose.override.yml
+.env
+
+# ci artifacts
+/test_*
+/dev_*
+/projects
+
+# temporary stuff
+*.patch
+*.log
+*.orig
+*.rej
+*.bak
+*.db
+*.swp
+.~lock*
+
+# ides
+.idea
+.vscode
