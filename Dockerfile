@@ -1,36 +1,8 @@
-ARG NODE_VERSION=18
+FROM node:18-alpine
 
-FROM node:${NODE_VERSION}-alpine
-
-RUN apk add --no-cache make gcc g++ pkgconfig libsecret-dev python3 py3-setuptools
-
-WORKDIR /home/theia
-ADD package.json ./package.json
-
-RUN yarn set version classic
-
-RUN yarn && \
-	NODE_OPTIONS="--max_old_space_size=4096" yarn theia build && \
-	yarn theia download:plugins && \
-	yarn --production && \
-	yarn autoclean --init && \
-	echo *.ts >> .yarnclean && \
-	echo *.ts.map >> .yarnclean && \
-	echo *.spec.* >> .yarnclean && \
-	yarn autoclean  --force && \
-	yarn cache clean --verbose
-
-FROM node:${NODE_VERSION}-alpine
-
-RUN addgroup theia && \
-	adduser -G theia -s /bin/sh -D theia;
-
-RUN chmod g+rw /home && \
-	mkdir -p /home/workspace && \
-	chown -R theia:theia /home/theia && \
-	chown -R theia:theia /home/workspace;
-
-RUN apk add --no-cache git openssh bash libsecret curl zsh shadow
+RUN apk add --no-cache make gcc g++ pkgconfig \
+	libsecret-dev python3 py3-setuptools git \
+	openssh bash libsecret curl zsh shadow
 
 ENV HOME=/home/theia \
 	SHELL=/bin/zsh \
@@ -47,11 +19,24 @@ source "\$ZSH/oh-my-zsh.sh"
 zstyle ':omz:update' mode disabled
 EOT
 
+RUN addgroup theia && \
+	adduser -G theia -s /bin/zsh -D theia && \
+	usermod -aG node theia
+
 WORKDIR /home/theia
 
-RUN chsh -s /bin/zsh theia
+COPY package.json ./package.json
 
-COPY --from=0 --chown=theia:theia /home/theia /home/theia
+RUN yarn set version classic
+
+RUN yarn && \
+	NODE_OPTIONS="--max_old_space_size=4096" yarn theia build && \
+	yarn theia download:plugins
+
+RUN chmod g+rw /home && \
+	mkdir -p /home/workspace && \
+	chown -R theia:theia /home/theia && \
+	chown -R theia:theia /home/workspace
 
 COPY entrypoint.sh /entrypoint.sh
 

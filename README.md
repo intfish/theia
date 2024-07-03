@@ -23,4 +23,21 @@ docker run -it --init -p 3000:3000 \
 ## Notes
 `THEIA_WORKSPACE`- Sets default workspace path.
 
-When you have `.theia` folder with `settings.json` in the root of your project dir, preferences will be loaded automatically.
+When you have `.theia` directory with `settings.json` in the root of your project dir, preferences will be loaded automatically.
+
+
+## Theia extensions development POC
+
+## Run
+Mount theia extensions directory to workspace.
+```
+docker run -it --init -p 3000:3000 \
+    -v /theia/extensions:/home/workspace \
+    -e THEIA_WORKSPACE=/home/workspace theia-image
+```
+
+Edit `/home/theia/package.json`. by adding `"hello-world-test": "file:/home/workspace/hello-world-test"` to dependencies.
+
+Run `yarn && yarn theia build ` in `/home/theia/`.
+
+Refresh browser window and trigger the command "Say hello" via the command palette (F1 => "Say Hello"). A message dialog will pop up saying "Hello World".
