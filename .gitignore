@@ -5,6 +5,7 @@ __pycache__
 /docker-compose.yml
 /docker-compose.override.yml
 .env
+/tmp
 
 # ci artifacts
 /test_*
