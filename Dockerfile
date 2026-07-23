@@ -1,6 +1,8 @@
 ARG NODE_VERSION=22
+ARG THEIA_REF=v1.73.1
 
 FROM node:${NODE_VERSION}-alpine
+ARG THEIA_REF
 
 RUN apk add --no-cache \
 	git \
@@ -15,7 +17,7 @@ RUN apk add --no-cache \
 	py3-setuptools
 
 WORKDIR /home/theia
-RUN git clone --depth=1 https://github.com/eclipse-theia/theia theia
+RUN git clone --depth=1 -b ${THEIA_REF} https://github.com/eclipse-theia/theia theia
 ADD package.json ./theia/custom/package.json
 ADD tsconfig.json ./theia/custom/tsconfig.json
 ADD webpack.config.js ./theia/custom/webpack.config.js
