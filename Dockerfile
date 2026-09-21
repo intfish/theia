@@ -24,9 +24,21 @@ ADD webpack.config.js ./theia/custom/webpack.config.js
 
 WORKDIR /home/theia/theia
 
-RUN npm install && npm run compile && npm run download:plugins
-RUN cd custom && npm run build:production
+# use the node headers shipped in the image instead of downloading them from
+# unofficial-builds.nodejs.org (node:alpine sets use_prefix_to_find_headers=false).
+# this way headers always match the runtime node version.
+ENV npm_config_nodedir=/usr/local
 
+# puppeteer's postinstall downloads Chrome into stage 0's cache. skip it.
+ENV PUPPETEER_SKIP_DOWNLOAD=true
+
+# node-pty ships a glibc prebuild (prebuilds/linux-x64/pty.node);
+# on musl (Alpine) it loads but segfaults in spawn()
+# rebuild it from source.
+RUN npm install && \
+	npm_config_build_from_source=true npm rebuild node-pty && \
+	npm run compile && npm run download:plugins
+RUN cd custom && npm run build:production
 
 FROM node:${NODE_VERSION}-alpine
 
@@ -66,6 +78,11 @@ COPY entrypoint.sh /entrypoint.sh
 COPY --from=0 /home/theia/theia /home/theia/theia
 RUN chmod -R a+r /home/theia/theia && \
 	mkdir -p /home/theia/.theia && chown theia:theia /home/theia/.theia
+
+# regression guard: node-pty must spawn a pty without segfaulting.
+# fails the build if the glibc prebuild sneaks back in.
+RUN cd /home/theia/theia && node -e 'const p=require("node-pty");const t=p.spawn("echo",["pty-ok"],{cols:80,rows:24});let out="";t.onData(d=>out+=d);t.onExit(e=>{console.log("node-pty spawn: exitCode="+e.exitCode+" signal="+e.signal+" out="+out.trim());if(e.signal||e.exitCode!==0||out.indexOf("pty-ok")<0)process.exit(1);process.exit(0)});'
+RUN test ! -f /home/theia/theia/node_modules/node-pty/prebuilds/linux-x64/pty.node && echo "node-pty: musl build in use (no glibc prebuild)"
 
 WORKDIR /home/theia/theia/custom
 USER theia
